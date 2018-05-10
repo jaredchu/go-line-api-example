@@ -7,7 +7,7 @@ import (
 	"google.golang.org/appengine/memcache"
 	"fmt"
 	"io"
-	"encoding/json"
+	"io/ioutil"
 )
 
 var memCacheKey = "last_request"
@@ -30,12 +30,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func webhook(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	data, err := json.Marshal(r.Form)
-	if (err != nil) {
-		io.WriteString(w, "Error")
-	}
-
+	data := getBodyString(r)
 	ctx := appengine.NewContext(r)
 	item := &memcache.Item{
 		Key:   memCacheKey,
@@ -56,4 +51,13 @@ func webhookList(w http.ResponseWriter, r *http.Request) {
 	} else {
 		io.WriteString(w, string(item.Value[:]))
 	}
+}
+
+func getBodyString(r *http.Request) []byte {
+	var bodyBuffer []byte
+	if r.Body != nil {
+		bodyBuffer, _ = ioutil.ReadAll(r.Body)
+	}
+
+	return bodyBuffer
 }
